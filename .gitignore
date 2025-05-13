@@ -172,3 +172,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Certificates folder
+certs/*
+
+# Weather Data
+weather_data.json
