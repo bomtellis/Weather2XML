@@ -177,4 +177,4 @@ cython_debug/
 certs/*
 
 # Weather Data
-weather_data.json
+*weather_data*.json

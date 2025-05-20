@@ -7,6 +7,8 @@ import xml.etree.cElementTree as ET
 import json
 from datetime import datetime, timedelta, timezone
 import weather
+import asyncio
+import sys
 
 # WEB SERVER SETUP
 HOSTNAME = "127.0.0.1"
@@ -109,19 +111,29 @@ def updateSunsetTime():
     temps, times, dates, sunrises, sunsets = load_forecast(forecast_file)
 
     current_datetime = datetime.today()
-    dayIndex = findDayIndex()
+    try:
+        dayIndex = findDayIndex()
+    except Exception as e:
+        print("error", e)
+        reloadProgram()
+        return
 
     if dayIndex == None:
         # Day index doesn't exist roll forward the weather data
-        weather.main()
+        reloadProgram()
         updateSunsetTime()
     else:
         # We want the sunset time to before the sunrise time of the current day
 
         # Find the last sunset of the current day and check it is before the current day' sunrise
-        current_day_sunset = datetime.fromisoformat(
-            sunsets[dayIndex]
-        )  # Current Day Sunset
+        try:
+            current_day_sunset = datetime.fromisoformat(
+                sunsets[dayIndex]
+            )  # Current Day Sunset
+        except Exception as e:
+            print("error", e)
+            reloadProgram()
+            return
         if current_day_sunset < current_datetime:
             # We are before 23:59 current day and it is correct.
             # Output as UTC
@@ -149,14 +161,25 @@ def updateSunriseTime():
     temps, times, dates, sunrises, sunsets = load_forecast(forecast_file)
 
     current_datetime = datetime.today()
-    todays_sunrise = datetime.fromisoformat(
-        sunrises[dayIndex]
-    )  # This is based on today's date
-    dayIndex = findDayIndex()
+    try:
+        todays_sunrise = datetime.fromisoformat(
+            sunrises[dayIndex]
+        )  # This is based on today's date
+    except Exception as e:
+        print("error", e)
+        reloadProgram()
+        return
+    try:
+        dayIndex = findDayIndex()
+    except Exception as e:
+        print("error", e)
+        reloadProgram()
+        return
     if dayIndex == None:
         # Day index doesn't exist roll forward the weather data
-        weather.main()  # Run async main function
+        reloadProgram()  # Run async main function
         updateSunriseTime()
+        return
     else:
         # We want the sunrise time to be after the sunset time of the previous day
         if current_datetime < todays_sunrise:
@@ -167,8 +190,9 @@ def updateSunriseTime():
         else:
             # add 1 to dayIndex
             if (dayIndex + 1) > len(sunrises):
-                weather.main()
+                reloadProgram()
                 updateSunriseTime()
+                return
             else:
                 sunrise = str(
                     datetime.fromisoformat(sunrises[dayIndex + 1]).astimezone(
@@ -181,7 +205,11 @@ def findDayIndex():
     current_date = str(datetime.today().date())
 
     # Loop thru dates to find index
-    index = dates.index(current_date)
+    try:
+        index = dates.index(current_date)
+    except Exception as e:
+        print("error", e)
+        return None
 
     if index != None:
         return index
@@ -226,20 +254,37 @@ def run_server():
     webServer.serve_forever()
 
 
+def loadProgram():
+    global temps, times, dates, sunrises, sunsets, events
+    temps, times, dates, sunrises, sunsets = load_forecast(forecast_file)
+    events = detect_cold_snap(temps, times)
+
+    updateSunsetTime()
+    updateSunriseTime()
+
+
+def reloadProgram():
+    asyncio.run(weather.main())
+    loadProgram()
+
+
 # Main
 if __name__ == "__main__":
     # Load temps, times, sunrise, sunset initially
-    temps, times, dates, sunrises, sunsets = load_forecast(forecast_file)
-    events = detect_cold_snap(temps, times)
+    try:
+        loadProgram()
+    except Exception as e:
+        print("error", e)
+        try:
+            reloadProgram()
+        except Exception as f:
+            print("error", f)
 
     # Start HTTP server in a background thread
     server_thread = threading.Thread(target=run_server, daemon=True)
     server_thread.start()
 
     print("Application running")
-
-    updateSunsetTime()
-    updateSunriseTime()
 
     # Run the scheduler loop on the main thread
     run_scheduler()
