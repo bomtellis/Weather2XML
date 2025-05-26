@@ -189,16 +189,26 @@ def updateSunriseTime():
             )
         else:
             # add 1 to dayIndex
-            if (dayIndex + 1) > len(sunrises):
+            if dayIndex == None:
+                reloadProgram()
+                updateSunriseTime()
+                return
+            elif (dayIndex + 1) > len(sunrises):
                 reloadProgram()
                 updateSunriseTime()
                 return
             else:
-                sunrise = str(
-                    datetime.fromisoformat(sunrises[dayIndex + 1]).astimezone(
-                        timezone.utc
+                try:
+                    sunrise = str(
+                        datetime.fromisoformat(sunrises[dayIndex + 1]).astimezone(
+                            timezone.utc
+                        )
                     )
-                )
+                except Exception as e:
+                    print("error", e)
+                    reloadProgram()
+                    updateSunriseTime()
+                    return
 
 
 def findDayIndex():
