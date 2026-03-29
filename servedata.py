@@ -6,6 +6,7 @@ import ssl
 import xml.etree.cElementTree as ET
 import json
 from datetime import datetime, timedelta, timezone
+import pytz
 import weather
 import asyncio
 import sys
@@ -26,6 +27,7 @@ SYSTEM_REPSONSE_HOURS = 3  # hours required for system to heat up in anticipatio
 
 COLD_SNAP = False
 
+TIMEZONE = pytz.timezone("Europe/London")
 
 def load_forecast(json_path):
     with open(json_path, "r") as file:
@@ -137,7 +139,7 @@ def updateSunsetTime():
         if current_day_sunset < current_datetime:
             # We are before 23:59 current day and it is correct.
             # Output as UTC
-            sunset = str(current_day_sunset.astimezone(timezone.utc))
+            sunset = str(current_day_sunset.astimezone(TIMEZONE))
         elif current_day_sunset > current_datetime:
             # We could be after midnight the day after the previous sunset
             # Check if the current time is before the next sunrise
@@ -147,13 +149,13 @@ def updateSunsetTime():
                 # Output as UTC
                 sunset = str(
                     datetime.fromisoformat(sunsets[dayIndex - 1]).astimezone(
-                        timezone.utc
+                        TIMEZONE
                     )
                 )
             else:
                 # The sun has risen so sunset must be later on today
                 # Output as UTC
-                sunset = str(current_day_sunset.astimezone(timezone.utc))
+                sunset = str(current_day_sunset.astimezone(TIMEZONE))
 
 
 def updateSunriseTime():
@@ -185,7 +187,7 @@ def updateSunriseTime():
         if current_datetime < todays_sunrise:
             # Output as UTC
             sunrise = str(
-                datetime.fromisoformat(sunrises[dayIndex]).astimezone(timezone.utc)
+                datetime.fromisoformat(sunrises[dayIndex]).astimezone(TIMEZONE)
             )
         else:
             # add 1 to dayIndex
@@ -201,7 +203,7 @@ def updateSunriseTime():
                 try:
                     sunrise = str(
                         datetime.fromisoformat(sunrises[dayIndex + 1]).astimezone(
-                            timezone.utc
+                            TIMEZONE
                         )
                     )
                 except Exception as e:
