@@ -275,14 +275,12 @@ def loadProgram():
     updateSunriseTime()
 
 
-async def reloadProgram():
+def reloadProgram():
     try:
         task = asyncio.run(weather.main())
     except:
         print("Task failed")
-    await task
     loadProgram()
-
 
 # Main
 if __name__ == "__main__":
