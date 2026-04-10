@@ -201,11 +201,16 @@ def updateSunriseTime():
                 return
             else:
                 try:
-                    sunrise = str(
-                        datetime.fromisoformat(sunrises[dayIndex + 1]).astimezone(
-                            TIMEZONE
+                    array_length = len(sunrises)
+                    if array_length + 1 > len(sunrises):
+                        # error reload program
+                        reloadProgram()
+                    else:
+                        sunrise = str(
+                            datetime.fromisoformat(sunrises[dayIndex + 1]).astimezone(
+                                TIMEZONE
+                            )
                         )
-                    )
                 except Exception as e:
                     print("error", e)
                     reloadProgram()
@@ -275,8 +280,12 @@ def loadProgram():
     updateSunriseTime()
 
 
-def reloadProgram():
-    asyncio.run(weather.main())
+async def reloadProgram():
+    try:
+        task = asyncio.run(weather.main())
+    except:
+        print("Task failed")
+    await task
     loadProgram()
 
 
