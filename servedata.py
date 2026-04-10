@@ -201,17 +201,12 @@ def updateSunriseTime():
                 return
             else:
                 try:
-                    array_length = len(sunrises)
-                    if array_length + 1 > len(sunrises):
-                        # error reload program
-                        reloadProgram()
-                    else:
-                        sunrise = str(
-                            datetime.fromisoformat(sunrises[dayIndex + 1]).astimezone(
-                                TIMEZONE
-                            )
+                    sunrise = str(
+                        datetime.fromisoformat(sunrises[dayIndex + 1]).astimezone(
+                            TIMEZONE
                         )
-                except Exception as e:
+                    )
+                except IndexError as e:
                     print("error", e)
                     reloadProgram()
                     updateSunriseTime()
